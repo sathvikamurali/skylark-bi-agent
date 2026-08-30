@@ -1,5 +1,5 @@
 streamlit>=1.38,<2
-anthropic>=0.40,<1
+google-genai>=1.0,<2
 requests>=2.32,<3
 python-dateutil>=2.9,<3
 rapidfuzz>=3.9,<4
