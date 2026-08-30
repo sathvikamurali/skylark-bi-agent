@@ -10,7 +10,7 @@ import os
 
 import streamlit as st
 
-from agent.claude_agent import BIAgent
+from agent.gemini_agent import BIAgent
 from agent.tools import clear_cache
 from monday.client import MondayClient, MondayAPIError
 
