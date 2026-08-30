@@ -17,6 +17,30 @@ The LLM is not responsible for performing the underlying business arithmetic. Bu
 
 ---
 
+## Demo
+
+The agent is designed to answer business questions directly from live
+monday.com data while keeping business calculations deterministic and
+surfacing data-quality limitations.
+
+### Revenue by Sector
+
+![Revenue by Sector](docs/screenshots/revenue_by_sector.png)
+
+### Active Pipeline Analysis
+
+![Active Pipeline](docs/screenshots/active_pipeline.png)
+
+### Overdue Work Orders
+
+![Overdue Work Orders](docs/screenshots/overdue_work_orders.png)
+
+### Leadership Summary
+
+![Leadership Summary](docs/screenshots/leadership_summary.png)
+
+---
+
 ## Architecture
 
 ```text
