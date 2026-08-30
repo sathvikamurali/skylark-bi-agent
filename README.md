@@ -15,9 +15,16 @@ The agent interprets the question, selects the appropriate BI tool(s), retrieves
 
 The LLM is not responsible for performing the underlying business arithmetic. Business calculations are performed deterministically by Python tools using the live board data.
 
+## 🚀 Live Demo
+
+👉 **[Try the Skylark BI Agent](https://skylark-bi-agent-5hzrjbdbpf3wayrxfg9p4z.streamlit.app/)**
+
+> Ask questions about revenue, pipeline, work orders, execution status,
+> overdue projects, sector performance, and leadership summaries.
+
 ---
 
-## Demo
+## Demo Screenshots
 
 The agent is designed to answer business questions directly from live
 monday.com data while keeping business calculations deterministic and
