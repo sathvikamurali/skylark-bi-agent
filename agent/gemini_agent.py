@@ -140,7 +140,6 @@ class BIAgent:
                     types.Part.from_function_response(
                         name=name,
                         response={"result": result_text},
-                        id=tool_call.id,
                     )
                 )
 
