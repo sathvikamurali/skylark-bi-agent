@@ -16,7 +16,12 @@ from monday.client import MondayClient, MondayAPIError
 
 st.set_page_config(page_title="Skylark BI Agent", page_icon="📊", layout="centered")
 
-REQUIRED_ENV_VARS = ["ANTHROPIC_API_KEY", "MONDAY_API_TOKEN", "MONDAY_WORK_ORDERS_BOARD_ID", "MONDAY_DEALS_BOARD_ID"]
+REQUIRED_ENV_VARS = [
+    "GEMINI_API_KEY",
+    "MONDAY_API_TOKEN",
+    "MONDAY_WORK_ORDERS_BOARD_ID",
+    "MONDAY_DEALS_BOARD_ID"
+]
 
 
 def _load_secrets_into_env():
