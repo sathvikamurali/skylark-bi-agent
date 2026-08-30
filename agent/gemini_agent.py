@@ -17,8 +17,10 @@ from agent.system_prompt import SYSTEM_PROMPT
 from agent.tools import TOOL_DEFINITIONS, TOOL_IMPLEMENTATIONS
 
 
-DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
-FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash")
+DEFAULT_MODEL = os.environ.get(
+    "GEMINI_MODEL",
+    "gemini-3.1-flash-lite",
+)
 
 MAX_TOOL_ROUNDS = 6
 MAX_RETRIES = 3
@@ -74,50 +76,34 @@ class BIAgent:
     def __init__(self, model: str = DEFAULT_MODEL):
         self.client = genai.Client()
         self.model = model
-        self.fallback_model = FALLBACK_MODEL
         self.tools = _gemini_tools()
 
     def _generate_with_retry(self, contents, config):
         """
         Call Gemini with retry/backoff for temporary 503 errors.
-
-        If the primary model remains unavailable after retries,
-        automatically try the fallback model.
         """
-
-        models_to_try = [self.model]
-
-        if self.fallback_model and self.fallback_model != self.model:
-            models_to_try.append(self.fallback_model)
 
         last_error = None
 
-        for model_name in models_to_try:
+        for attempt in range(MAX_RETRIES):
+            try:
+                return self.client.models.generate_content(
+                    model=self.model,
+                    contents=contents,
+                    config=config,
+                )
 
-            for attempt in range(MAX_RETRIES):
+            except Exception as exc:
+                last_error = exc
 
-                try:
-                    return self.client.models.generate_content(
-                        model=model_name,
-                        contents=contents,
-                        config=config,
-                    )
+                if not _is_retryable_error(exc):
+                    raise
 
-                except Exception as exc:
-                    last_error = exc
-
-                    if not _is_retryable_error(exc):
-                        raise
-
-                    # Exponential backoff:
-                    # 2s → 4s → 8s
-                    if attempt < MAX_RETRIES - 1:
-                        delay = 2 ** (attempt + 1)
-
-                        time.sleep(delay)
-
-            # Primary model failed all retries.
-            # Try fallback model next.
+                # Exponential backoff:
+                # 2s → 4s → 8s
+                if attempt < MAX_RETRIES - 1:
+                    delay = 2 ** (attempt + 1)
+                    time.sleep(delay)
 
         raise last_error
 
