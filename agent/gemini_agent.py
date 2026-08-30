@@ -8,6 +8,7 @@ Streamlit, a CLI, or tests identically.
 from __future__ import annotations
 
 import os
+import time
 
 from google import genai
 from google.genai import types
@@ -17,7 +18,10 @@ from agent.tools import TOOL_DEFINITIONS, TOOL_IMPLEMENTATIONS
 
 
 DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash")
+
 MAX_TOOL_ROUNDS = 6
+MAX_RETRIES = 3
 
 
 def _gemini_tools():
@@ -53,11 +57,69 @@ def _to_gemini_contents(conversation: list[dict]) -> list[types.Content]:
     return contents
 
 
+def _is_retryable_error(exc: Exception) -> bool:
+    """Return True for temporary Gemini availability errors."""
+    error_text = str(exc).lower()
+
+    return (
+        "503" in error_text
+        or "service unavailable" in error_text
+        or "unavailable" in error_text
+        or "temporarily overloaded" in error_text
+        or "high demand" in error_text
+    )
+
+
 class BIAgent:
     def __init__(self, model: str = DEFAULT_MODEL):
         self.client = genai.Client()
         self.model = model
+        self.fallback_model = FALLBACK_MODEL
         self.tools = _gemini_tools()
+
+    def _generate_with_retry(self, contents, config):
+        """
+        Call Gemini with retry/backoff for temporary 503 errors.
+
+        If the primary model remains unavailable after retries,
+        automatically try the fallback model.
+        """
+
+        models_to_try = [self.model]
+
+        if self.fallback_model and self.fallback_model != self.model:
+            models_to_try.append(self.fallback_model)
+
+        last_error = None
+
+        for model_name in models_to_try:
+
+            for attempt in range(MAX_RETRIES):
+
+                try:
+                    return self.client.models.generate_content(
+                        model=model_name,
+                        contents=contents,
+                        config=config,
+                    )
+
+                except Exception as exc:
+                    last_error = exc
+
+                    if not _is_retryable_error(exc):
+                        raise
+
+                    # Exponential backoff:
+                    # 2s → 4s → 8s
+                    if attempt < MAX_RETRIES - 1:
+                        delay = 2 ** (attempt + 1)
+
+                        time.sleep(delay)
+
+            # Primary model failed all retries.
+            # Try fallback model next.
+
+        raise last_error
 
     def run_turn(
         self,
@@ -81,10 +143,9 @@ class BIAgent:
 
         for _ in range(MAX_TOOL_ROUNDS):
 
-            response = self.client.models.generate_content(
-                model=self.model,
-                contents=contents,
-                config=config,
+            response = self._generate_with_retry(
+                contents,
+                config,
             )
 
             model_content = response.candidates[0].content
@@ -157,6 +218,7 @@ class BIAgent:
         )
 
         updated_conversation = list(conversation)
+
         updated_conversation.append(
             {
                 "role": "assistant",
