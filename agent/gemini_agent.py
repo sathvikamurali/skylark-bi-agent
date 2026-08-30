@@ -16,7 +16,7 @@ from agent.system_prompt import SYSTEM_PROMPT
 from agent.tools import TOOL_DEFINITIONS, TOOL_IMPLEMENTATIONS
 
 
-DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.7-flash")
+DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 MAX_TOOL_ROUNDS = 6
 
 
